@@ -68,9 +68,9 @@ class Player(object):
 #     win.blit(textSurf, textRect)
 
 #     pygame.display.update()
-#     # gives time for how long text will be on screen in seconds
+#     gives time for how long text will be on screen in seconds
 #     time.sleep(2)
-#     # restarts game after loss
+#     restarts game after loss
 #     gameLoop()
 
 # def messageDisplay(text):
