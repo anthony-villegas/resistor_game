@@ -1,25 +1,64 @@
 import pygame
 import time
+import random
 
-
+#intializing pygame
 pygame.init()
-screenWidth = 700
-screenHeight = 700
+
+#assigning values for window height and width and creating a window based on those values
+screenWidth = 800
+screenHeight = 800
 win = pygame.display.set_mode((screenWidth, screenHeight))
 
+#assigning hex values for colors to use in game
 black = pygame.color.Color('#000000')
 white = pygame.color.Color('#ffffff')
 blue = pygame.color.Color('#080357')
 
+#assigning text fonts and sizes for games
 font = pygame.font.Font('freesansbold.ttf', 32)
 
-textX = 10
-textY = 10
+#set caption appearing in window of game
+pygame.display.set_caption("Resistor")
 
-pygame.display.set_caption("Electrode")
+#loading images to be used in game
 bernieImg = pygame.image.load('trump.jpg')
 
+#initializing clock for game
 clock = pygame.time.Clock()
+
+class Component(object):
+
+    def __init__(self, level):
+        self.level = level
+
+    #assigns properties of each electric component (resistor and capacitor)
+    def resistor(self):
+        pass
+    
+    def capacitor(self):
+        pass
+
+    #provides functionality for drawing resistor and capacitor
+    def drawComponent(self, win):
+        pass
+
+    #will randomly generate player field based on level progression of player
+    def generateComponents(self, level):
+        pass
+
+class Resistor(object):
+    def __init__(self):
+        self.image = pygame.Surface((20, 10))
+        self.image.fill(white)
+        self.rect = self.image.get_rect()
+        self.rect.x = random.randrange(screenWidth - self.rect.width)
+        self.rect.y = random.randrange(screenHeight - self.rect.height)
+    
+    def draw(self, win):
+        win.blit(self.image, (self.rect.x, self.rect.y))
+        # pygame.draw.rect(win, white, (self.rect.x, self.rect.y))
+
 
 
 class Player(object):
@@ -49,46 +88,6 @@ class Player(object):
             self.yPos += self.vel
 
 
-# # gives funcitonality for displaying text as this isn't available by default in pygame
-# def textObjects(text, largeText, color):
-#     # .render() built into pygame; render text, set anti aliasing to true and set color of text
-#     textSurface = pygame.font.render(text, True, color)
-#     # this is used to return rectangle around text to position text
-#     return textSurface, textSurface.get_rect()
-
-
-# def messageDisplay(text, color):
-#     # assign font type and size
-#     largeText = pygame.font.Font('freesansbold.ttf', 115)
-#     # call for text surface and rectangle by providing text and font
-#     textSurf, textRect = textObjects(text, largeText, color)
-#     # centers text on screen
-#     textRect.center = ((screenWidth/2), (screenHeight/2))
-#     # queue text in game
-#     win.blit(textSurf, textRect)
-
-#     pygame.display.update()
-#     gives time for how long text will be on screen in seconds
-#     time.sleep(2)
-#     restarts game after loss
-#     gameLoop()
-
-# def messageDisplay(text):
-#     font = pygame.font.Font('freesansbold.ttf', 115)
-#     win.blit(font.render(text, True, (0, 0, 0))
-#     pygame.display.update()
-#     time.sleep(2)
-#     gameLoop()
-
-# def messageDisplay():
-#     text_surface = font.render(
-#         'Hellow World!', antialias=True, color=blue)
-#     win.blit(text_surface, (200, 200))
-#     pygame.display.update()
-#     time.sleep(2)
-#     gameLoop()
-
-
 def showScore(x, y):
     score = font.render("Score: " + str(man.points), True, blue)
     win.blit(score, (x, y))
@@ -98,6 +97,7 @@ def redrawGameWindow():
     win.fill(black)
     showScore(screenWidth/2, 2)
     man.draw(win)
+    enemy.draw(win)
     pygame.display.update()
 
 
@@ -115,12 +115,12 @@ def gameLoop():
 
         man.move(keys)
 
-        if man.xPos < 40:
-            man.points += 1
+        # if man.xPos < 40:
+        #     man.points += 1
 
         redrawGameWindow()
 
-
+enemy = Resistor()
 man = Player(500, 500, 50, 33, 10, 0)
 
 gameLoop()
