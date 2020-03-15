@@ -16,6 +16,7 @@ black = pygame.color.Color('#000000')
 white = pygame.color.Color('#ffffff')
 blue = pygame.color.Color('#0000FF')
 red = pygame.color.Color('#FF0000')
+yellow = pygame.color.Color('#FFFF00')
 
 #assigning text fonts and sizes for games
 font = pygame.font.Font('freesansbold.ttf', 32)
@@ -28,9 +29,6 @@ gameFolder = os.path.dirname(__file__)
 # joings game folder and images folder
 imageFolder = os.path.join(gameFolder, "img")
 
-
-#initializing clock for game
-clock = pygame.time.Clock()
 
 class Component(object):
 
@@ -68,13 +66,15 @@ class Resistor(object):
 
 class Player(object):
     def __init__(self, xPos, yPos, vel, points):
-        self.image = pygame.image.load(os.path.join(imageFolder, "trump.jpg")).convert()
+        # self.image = pygame.image.load(os.path.join(imageFolder, "trump.jpg")).convert()
+        self.image = pygame.Surface((20,20))
+        self.image.fill(blue)
         self.rect = self.image.get_rect()
         self.rect.x = xPos
         self.rect.y = yPos
         self.vel = vel
         self.velx = 0
-        self.vely = self.vel
+        self.vely = 0
         self.points = points
 
     def draw(self, win):
@@ -96,11 +96,14 @@ class Player(object):
             if keys[pygame.K_DOWN]:
                 self.vely = self.vel
                 self.velx = 0
+        # if self.rect.right - self.velx > screenWidth:
+        #         self.rect.right = screenWidth
+        # if self.rect.left + self.velx < 0:
+        #         self.rect.left = 0
 
         self.rect.x += self.velx
         self.rect.y += self.vely
-            
-
+                
         # if keys[pygame.K_LEFT] and self.rect.left > self.vel:
         #     self.rect.x -= self.vel
 
@@ -115,21 +118,45 @@ class Player(object):
         #     self.yPos += self.vel
 
 
+#creates surface on which to place text, places text, then blits surface at position x, y
 def showScore(x, y):
-    score = font.render("Score: " + str(man.points), True, red)
+    score = font.render("Score: " + str(man.points), True, yellow)
     win.blit(score, (x, y))
+
+#draws square grid for game number 'rows'; invisible in actual game but used for object placement and movement
+def drawGrid(rows):
+    #defines integer width of each square in grid
+    squareWidth = screenWidth // rows
+    
+    #variables to track x and y axis for line placement in generating grid
+    x = 0
+    y = 0
+
+    #will generate amount of lines based on value of rows
+    for i in range(rows):
+        x = x + squareWidth
+        y = y + squareWidth
+
+        #draws varying color line on horizontal and vertical axis
+        #pygame.draw.line(surface/game window, color, start position of line,end position of line )
+        pygame.draw.line(win, red, (x, 0), (x, screenWidth))
+        pygame.draw.line(win, red, (0, y), (screenHeight, y))
 
 
 def redrawGameWindow():
     win.fill(black)
+    drawGrid(20)
     showScore(screenWidth/2, 2)
     man.draw(win)
     enemy.draw(win)
     pygame.display.update()
 
 
-def gameLoop():
-    # mainloop
+def main():
+    #initializing clock for game
+    clock = pygame.time.Clock()
+    
+    # gameloop
     run = True
     while run:
         pygame.time.delay(100)
@@ -141,18 +168,13 @@ def gameLoop():
             if event.type == pygame.QUIT:
                 run = False
 
-            #if user presses a key then this key will be sent to Player class to determine movement
-            # if event.type == KEYDOWN:
-            #     man.move(event.key)
-
-    
-
         man.move()
 
         redrawGameWindow()
 
 enemy = Resistor()
-man = Player(500, 500, 10, 0)
+#def __init__(self, xPos, yPos, vel, points):
+man = Player(500, 500, 20, 0)
 
-gameLoop()
+main()
 pygame.quit()
