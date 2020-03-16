@@ -84,6 +84,11 @@ class Player(object):
 
         self.rect.x += self.velx
         self.rect.y += self.vely
+    
+    def checkCollision(self):
+        if self.rect.left < squareWidth or self.rect.top < squareWidth or self.rect.right > screenWidth - squareWidth or self.rect.bottom > screenHeight - squareWidth:
+            self.points += 1
+
                 
 #creates surface on which to place text, places text, then blits surface at position x, y
 def showScore(x, y):
@@ -95,7 +100,7 @@ def drawGrid():
     #variables to track x and y axis for line placement in generating grid
     x = 0
     y = 0
-
+    
     #will generate amount of lines based on value of rows
     for i in range(rows):
         x = x + squareWidth
@@ -105,13 +110,26 @@ def drawGrid():
         #pygame.draw.line(surface/game window, color, start position of line,end position of line )
         pygame.draw.line(win, black, (x, 0), (x, screenWidth))
         pygame.draw.line(win, black, (0, y), (screenHeight, y))
+    
+    #creating boundaries along edge of window to denote kill zones
+    #vertical boundary
+    boundaryVert = pygame.Surface((squareWidth, screenHeight))
+    boundaryVert.fill(red)
+    win.blit(boundaryVert, (0, 0))
+    win.blit(boundaryVert, (screenWidth - squareWidth, 0))
+    #horizontal boundary
+    boundaryHor = pygame.Surface((screenWidth, squareWidth))
+    boundaryHor.fill(red)
+    win.blit(boundaryHor, (0,0))
+    win.blit(boundaryHor, (0, screenHeight - squareWidth))
+    
 
 
 def redrawGameWindow():
     win.fill(black)
+    man.draw(win)
     drawGrid()
     showScore(screenWidth/2, 2)
-    man.draw(win)
     enemy.draw()
     pygame.display.update()
 
@@ -124,7 +142,6 @@ def main():
     run = True
     while run:
         pygame.time.delay(60)
-
         #tracks all events/inputs by user that occur
         for event in pygame.event.get():
 
@@ -133,13 +150,15 @@ def main():
                 run = False
 
         man.move()
+        
+        man.checkCollision()
 
         redrawGameWindow()
 
 
 enemy = Resistor()
 #def __init__(self, row, column, vel, points):
-man = Player(21, 21 , 40, 0)
+man = Player(21, 21 , 10, 0)
 
 main()
 pygame.quit()
