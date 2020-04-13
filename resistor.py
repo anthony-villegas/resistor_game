@@ -7,12 +7,12 @@ import os
 pygame.init()
 
 #assigning values for window height and width and creating a window based on those values
-screenWidth = 800
-screenHeight = 800
-win = pygame.display.set_mode((screenWidth, screenHeight))
+screenWidth = 1000
+screenHeight = 1000
+display = pygame.display.set_mode((screenWidth, screenHeight))
 
 #assigning number of rows for game and finding integer width of each square within grid
-rows = 80
+rows = 100
 squareWidth = screenWidth // rows
 
 #assigning hex values for colors to use in game
@@ -21,6 +21,8 @@ white = pygame.color.Color('#ffffff')
 blue = pygame.color.Color('#0000FF')
 red = pygame.color.Color('#FF0000')
 yellow = pygame.color.Color('#FFFF00')
+wireColor = pygame.color.Color('#423629')
+playerColor = pygame.color.Color('#F1AB86')
 
 #assigning text fonts and sizes for games
 font = pygame.font.Font('freesansbold.ttf', 32)
@@ -33,24 +35,38 @@ gameFolder = os.path.dirname(__file__)
 # joings game folder and images folder
 imageFolder = os.path.join(gameFolder, "img")
 
+#variable to turn debug mode during development on or off
+debug = False
 
-class Resistor(object):
-    def __init__(self):
+#stores rects of all obstacles in game
+colliders = []
+
+class ElectricComponent(object):
+    def __init__(self, color):
         self.image = pygame.Surface((squareWidth, squareWidth))
-        self.image.fill(white)
+        self.image.fill(color)
         self.rect = self.image.get_rect()
         self.rect.x = random.randrange(rows)
-        self.rect.y = random.randrange(rows)       
+        self.rect.y = random.randrange(rows)    
 
     def draw(self):
         #self.rect.y/x contains an integer value for row. Multiplying this value by squareWidth serves to ensure resistor is placed in an integer value row or column on a normally pixel valued screen
-        win.blit(self.image, (self.rect.x*squareWidth+1, self.rect.y*squareWidth+1))
+        display.blit(self.image, (self.rect.x*squareWidth, self.rect.y*squareWidth))  
+
+class Resistor(ElectricComponent):
+    pass
+
+class Capacitor(ElectricComponent):
+    pass
 
 class Player(object):
     def __init__(self, row, column, vel, points):
         # self.image = pygame.image.load(os.path.join(imageFolder, "trump.jpg")).convert()
+        #creating surfaces & rects to be displayed on screeen
         self.image = pygame.Surface((squareWidth,squareWidth))
-        self.image.fill(blue)
+        self.image.fill(playerColor)
+        self.wire = pygame.Surface((squareWidth, squareWidth))
+        self.wire.fill(wireColor)
         self.rect = self.image.get_rect()
         #gives column/row values for player rectangle; same logic as Resistor.draw()
         self.rect.x = row * squareWidth 
@@ -59,12 +75,26 @@ class Player(object):
         self.vel = vel
         self.velx = 0
         self.vely = 0
+        # data storage for scores and collision detection
         self.points = points
+        self.wire_cords = [(self.rect.x, self.rect.y)]
 
-    #draws player at given row 
-    def draw(self, win):
-        win.blit(self.image, (self.rect.x, self.rect.y))
-   
+     
+    def draw(self, display):
+
+        # if statement blocks wire_cords array from storing duplicate coordinates due to player character staying at a given coordiante for multiple frames
+        if (self.rect.x, self.rect.y) != self.wire_cords[len(self.wire_cords) - 1]:
+            self.wire_cords.append((self.rect.x, self.rect.y))
+        
+        #draws wire / past player positions
+        for cord in self.wire_cords:
+            display.blit(self.wire, cord)
+            
+        #draws head of wire / character position
+        display.blit(self.image, (self.rect.x, self.rect.y))
+  
+        
+
     def move(self):
         keys = pygame.key.get_pressed()
 
@@ -89,11 +119,14 @@ class Player(object):
         if self.rect.left < squareWidth or self.rect.top < squareWidth or self.rect.right > screenWidth - squareWidth or self.rect.bottom > screenHeight - squareWidth:
             self.points += 1
 
+        
+        
+
                 
 #creates surface on which to place text, places text, then blits surface at position x, y
 def showScore(x, y):
-    score = font.render("Score: " + str(man.points), True, yellow)
-    win.blit(score, (x, y))
+    score = font.render("Score: " + str(player.points), True, yellow)
+    display.blit(score, (x, y))
 
 #draws square grid for game number 'rows'; invisible in actual game but used for object placement and movement
 def drawGrid():  
@@ -102,35 +135,40 @@ def drawGrid():
     y = 0
     
     #will generate amount of lines based on value of rows
-    for i in range(rows):
-        x = x + squareWidth
-        y = y + squareWidth
+    if debug == True:
+        for i in range(rows):
+            x = x + squareWidth
+            y = y + squareWidth
 
-        #draws varying color line on horizontal and vertical axis
-        #pygame.draw.line(surface/game window, color, start position of line,end position of line )
-        pygame.draw.line(win, black, (x, 0), (x, screenWidth))
-        pygame.draw.line(win, black, (0, y), (screenHeight, y))
-    
+            #gives position of player
+            print(player.rect.x, player.rect.y)
+
+            #draws varying color line on horizontal and vertical axis
+            #pygame.draw.line(surface/game window, color, start position of line,end position of line )
+            pygame.draw.line(display, white, (x, 0), (x, screenWidth))
+            pygame.draw.line(display, white, (0, y), (screenHeight, y))
+        
     #creating boundaries along edge of window to denote kill zones
     #vertical boundary
     boundaryVert = pygame.Surface((squareWidth, screenHeight))
     boundaryVert.fill(red)
-    win.blit(boundaryVert, (0, 0))
-    win.blit(boundaryVert, (screenWidth - squareWidth, 0))
+    display.blit(boundaryVert, (0, 0))
+    display.blit(boundaryVert, (screenWidth - squareWidth, 0))
     #horizontal boundary
     boundaryHor = pygame.Surface((screenWidth, squareWidth))
     boundaryHor.fill(red)
-    win.blit(boundaryHor, (0,0))
-    win.blit(boundaryHor, (0, screenHeight - squareWidth))
+    display.blit(boundaryHor, (0,0))
+    display.blit(boundaryHor, (0, screenHeight - squareWidth))
     
 
 
 def redrawGameWindow():
-    win.fill(black)
-    man.draw(win)
+    display.fill(black)
+    player.draw(display)
     drawGrid()
     showScore(screenWidth/2, 2)
     enemy.draw()
+    enemy2.draw()
     pygame.display.update()
 
 
@@ -138,10 +176,12 @@ def main():
     #initializing clock for game
     clock = pygame.time.Clock()
 
+    FPS = 60
     # gameloop
     run = True
     while run:
-        pygame.time.delay(60)
+        pygame.time.delay(FPS)
+        
         #tracks all events/inputs by user that occur
         for event in pygame.event.get():
 
@@ -149,16 +189,17 @@ def main():
             if event.type == pygame.QUIT:
                 run = False
 
-        man.move()
+        player.move()
         
-        man.checkCollision()
+        player.checkCollision()
 
         redrawGameWindow()
 
 
-enemy = Resistor()
+enemy = Resistor(white)
+enemy2 = Capacitor(yellow)
 #def __init__(self, row, column, vel, points):
-man = Player(21, 21 , 10, 0)
+player = Player(21, 21 , 10, 0)
 
 main()
 pygame.quit()
