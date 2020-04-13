@@ -46,12 +46,17 @@ class ElectricComponent(object):
         self.image = pygame.Surface((squareWidth, squareWidth))
         self.image.fill(color)
         self.rect = self.image.get_rect()
-        self.rect.x = random.randrange(rows)
-        self.rect.y = random.randrange(rows)   
+        self.rect.x = random.randrange(squareWidth,rows)
+        self.rect.y = random.randrange(squareWidth,rows)  
+        colliders[(self.rect.x * squareWidth, self.rect.y * squareWidth, squareWidth,squareWidth)] = 'electric component' 
+      
         
     def draw(self):
         #self.rect.y/x contains an integer value for row. Multiplying this value by squareWidth serves to ensure resistor is placed in an integer value row or column on a normally pixel valued screen
         display.blit(self.image, (self.rect.x*squareWidth, self.rect.y*squareWidth))  
+        
+
+      
 
 class Resistor(ElectricComponent):
     pass
@@ -61,7 +66,7 @@ class Capacitor(ElectricComponent):
 
 class Player(object):
     def __init__(self, row, column, vel, points):
-        # self.image = pygame.image.load(os.path.join(imageFolder, "trump.jpg")).convert()
+        # self.image = pygame.image.load(os.path.join(imageFolder, "nyancat.jpg")).convert()
         #creating surfaces & rects to be displayed on screeen
         self.image = pygame.Surface((squareWidth,squareWidth))
         self.image.fill(playerColor)
@@ -78,7 +83,7 @@ class Player(object):
         # data storage for scores and collision detection
         self.points = points
         self.wire_cords = [(self.rect.x, self.rect.y)]
-        self.collisions = 0
+        self.collision_number = 0
 
     def draw(self, display):
 
@@ -118,19 +123,15 @@ class Player(object):
     
     
     def checkCollision(self):
-        if self.rect.left < squareWidth or self.rect.top < squareWidth or self.rect.right > screenWidth - squareWidth or self.rect.bottom > screenHeight - squareWidth:
-            self.points += 1
-
-        if self.rect.collidedictall(colliders):
-            self.collisions = self.collisions + 1
-            print("collide", self.collisions)
+        #returns colliders{} dict pair that collides with player
+        collisions = self.rect.collidedictall(colliders)
+        if collisions:
+            self.collision_number = self.collision_number + 1
+            print("collide", self.collision_number)
+            print(collisions)
             
         # for x, y in colliders.items():
-        #     print(x, y)
-
-# def checkCollisions(rect_one, rect_dict):
-#     if rect_one.collidedictall(rect_dict):
-#         print("collision")
+        #       print(x, y)
 
 #creates surface on which to place text, places text, then blits surface at position x, y
 def showScore(x, y):
@@ -156,7 +157,7 @@ def drawGrid():
             #pygame.draw.line(surface/game window, color, start position of line,end position of line )
             pygame.draw.line(display, white, (x, 0), (x, screenWidth))
             pygame.draw.line(display, white, (0, y), (screenHeight, y))
-        
+
     #creating boundaries along edge of window to denote kill zones
     #vertical boundary
     boundaryVert = pygame.Surface((squareWidth, screenHeight))
@@ -168,6 +169,18 @@ def drawGrid():
     boundaryHor.fill(red)
     display.blit(boundaryHor, (0,0))
     display.blit(boundaryHor, (0, screenHeight - squareWidth))
+
+    #adds boundaries to colliders dictionary at first run of loop
+    # z = 0
+    # if z == 0:
+    #     #vert colliders
+    #     colliders[(0, 0, squareWidth, screenHeight)] = 'boundary'
+    #     colliders[(screenWidth - squareWidth, 0, squareWidth, screenHeight)] ='boundary'
+    #     #hor colliders
+    #     colliders[(0,0, screenWidth,squareWidth)] = 'boundary'
+    #     colliders[(screenHeight - squareWidth, screenWidth, screenHeight)] = 'boundary'
+    #     z = z +1
+
     
 def redrawGameWindow():
     display.fill(black)
