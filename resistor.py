@@ -3,6 +3,9 @@ import time
 import random
 import os
 
+###########################
+#DECLARATION OF GLOBAL VARIABLES & INITIALIZING PYGAME
+###########################
 
 #intializing pygame
 pygame.init()
@@ -15,6 +18,12 @@ display = pygame.display.set_mode((screenWidth, screenHeight))
 #assigning number of rows for game and finding integer width of each square within grid
 rows = 100
 squareWidth = screenWidth // rows
+
+#dictionary stores rects touple as key for all obstacles in game and obstacle type (boundary, component) as value
+colliders = {}
+
+#FPS declared as global to allow manipulation for electrical component speed effects
+fps = 60
 
 #assigning hex values for colors to use in game
 black = pygame.color.Color('#000000')
@@ -40,11 +49,13 @@ imageFolder = os.path.join(gameFolder, "img")
 #variable to turn debug mode during development on or off
 debug = True
 
-#dictionary stores rects touple as key for all obstacles in game and obstacle type (boundary, component) as value
-colliders = {}
+###########################
+###########################
 
-#FPS declared as global to allow manipulation for electrical component speed effects
-fps = 60
+
+###########################
+#ENEMIES / OBSTACLES WITHIN GAME
+###########################
 
 class ElectricComponent:
     def __init__(self, color):
@@ -64,6 +75,14 @@ class Resistor(ElectricComponent):
 
 class Capacitor(ElectricComponent):
     pass
+
+###########################
+###########################
+
+
+###########################
+#PLAYER CLASS & FUNCTIONS
+###########################
 
 class Player:
     def __init__(self, row, column, vel, points):
@@ -104,22 +123,24 @@ class Player:
     
   
     def move(self):
+        #go through list of keyboard input
         keys = pygame.key.get_pressed()
 
         if keys:
             if keys[pygame.K_LEFT]:
                 self.velx = self.vel * -1
                 self.vely = 0
-            if keys[pygame.K_RIGHT]:
+            elif keys[pygame.K_RIGHT]:
                 self.velx = self.vel
                 self.vely = 0
-            if keys[pygame.K_UP]:
+            elif keys[pygame.K_UP]:
                 self.vely = self.vel * -1
                 self.velx = 0
-            if keys[pygame.K_DOWN]:
+            elif keys[pygame.K_DOWN]:
                 self.vely = self.vel
                 self.velx = 0
 
+        #change player position based on vel components
         self.rect.x += self.velx
         self.rect.y += self.vely
     
@@ -135,6 +156,7 @@ class Player:
 
             global fps
 
+            #executes effect of collision based on value string in dict
             if x == "wire":
                     self.points -= 20
                     fps = 100
@@ -142,41 +164,37 @@ class Player:
                     self.points += 20
                     fps = 30
 
-            # self.collision_number = self.collision_number + 1
-            # print("collide", self.collision_number)
-            # print(player.rect.x, player.rect.y)
-            # print(collisions)
-            
-            
-        # for x, y in colliders.items():
-        #       print(x, y)
+###########################
+###########################
 
-#creates surface on which to place text, places text, then blits surface at position x, y
+###########################
+#GAME / DISPLAY FUNCTIONS
+###########################
+
 def showScore(x, y):
+    #creates surface on which to place text, places text, then blits surface at position x, y
     score = font.render("Score: " + str(player.points), True, playerColor)
     display.blit(score, (x, y))
 
-#draws square grid for game number 'rows'; invisible in actual game but used for object placement and movement
 def drawGrid():  
+    #draws square grid for game number 'rows'; also used for object placement and movement
+    
     #variables to track x and y axis for line placement in generating grid
     x = 0
     y = 0
     
     #will generate amount of lines based on value of rows
-    if debug == True:
-        for i in range(rows):
-            x = x + squareWidth
-            y = y + squareWidth
+    for i in range(rows):
+        x = x + squareWidth
+        y = y + squareWidth
 
-            #gives position of player
-            # print(player.rect.x, player.rect.y)
-
-            #draws varying color line on horizontal and vertical axis
-            #pygame.draw.line(surface/game window, color, start position of line,end position of line )
-            pygame.draw.line(display, gridColor, (x, 0), (x, screenWidth))
-            pygame.draw.line(display, gridColor, (0, y), (screenHeight, y))
+        #draws varying color line on horizontal and vertical axis
+        #pygame.draw.line(surface/game window, color, start position of line,end position of line )
+        pygame.draw.line(display, gridColor, (x, 0), (x, screenWidth))
+        pygame.draw.line(display, gridColor, (0, y), (screenHeight, y))
 
     #creating boundaries along edge of window to denote kill zones
+
     #vertical boundary
     boundaryVert = pygame.Surface((squareWidth, screenHeight))
     boundaryVert.fill(red)
@@ -198,7 +216,6 @@ def drawGrid():
     #     colliders[(0,0, screenWidth,squareWidth)] = 'boundary'
     #     colliders[(screenHeight - squareWidth, screenWidth, screenHeight)] = 'boundary'
     #     z = z +1
-
     
 def redrawGameWindow():
     display.fill(white)
@@ -209,6 +226,18 @@ def redrawGameWindow():
     enemy2.draw()
     pygame.display.update()
 
+###########################
+###########################
+
+###########################
+#MAIN LOOP AND OBJECT INITIALIZATION
+###########################
+
+enemy = ElectricComponent(playerColor)
+enemy2 = ElectricComponent(yellow)
+
+#def __init__(self, row, column, vel, points):
+player = Player(21, 21 , 10, 0)
 
 def main():
     #initializing clock for game
@@ -227,8 +256,6 @@ def main():
             if event.type == pygame.QUIT:
                 run = False
 
-        
-
         player.move()
        
         player.checkCollision()
@@ -236,10 +263,9 @@ def main():
         # checkCollisions(player.rect, colliders)
         redrawGameWindow()
 
-enemy = ElectricComponent(playerColor)
-enemy2 = ElectricComponent(yellow)
-#def __init__(self, row, column, vel, points):
-player = Player(21, 21 , 10, 0)
-
+#quit pygame
 main()
 pygame.quit()
+
+###########################
+###########################
