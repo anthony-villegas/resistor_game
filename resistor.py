@@ -38,8 +38,8 @@ imageFolder = os.path.join(gameFolder, "img")
 #variable to turn debug mode during development on or off
 debug = False
 
-#stores rects of all obstacles in game
-colliders = []
+#dictionary stores rects of all obstacles in game and obstacle type
+colliders = {}
 
 class ElectricComponent(object):
     def __init__(self, color):
@@ -47,8 +47,8 @@ class ElectricComponent(object):
         self.image.fill(color)
         self.rect = self.image.get_rect()
         self.rect.x = random.randrange(rows)
-        self.rect.y = random.randrange(rows)    
-
+        self.rect.y = random.randrange(rows)   
+        
     def draw(self):
         #self.rect.y/x contains an integer value for row. Multiplying this value by squareWidth serves to ensure resistor is placed in an integer value row or column on a normally pixel valued screen
         display.blit(self.image, (self.rect.x*squareWidth, self.rect.y*squareWidth))  
@@ -78,13 +78,15 @@ class Player(object):
         # data storage for scores and collision detection
         self.points = points
         self.wire_cords = [(self.rect.x, self.rect.y)]
+        self.collisions = 0
 
-     
     def draw(self, display):
 
         # if statement blocks wire_cords array from storing duplicate coordinates due to player character staying at a given coordiante for multiple frames
         if (self.rect.x, self.rect.y) != self.wire_cords[len(self.wire_cords) - 1]:
             self.wire_cords.append((self.rect.x, self.rect.y))
+
+            colliders[(self.rect.x, self.rect.y, squareWidth, squareWidth)] = 'wire'
         
         #draws wire / past player positions
         for cord in self.wire_cords:
@@ -93,8 +95,6 @@ class Player(object):
         #draws head of wire / character position
         display.blit(self.image, (self.rect.x, self.rect.y))
   
-        
-
     def move(self):
         keys = pygame.key.get_pressed()
 
@@ -115,14 +115,23 @@ class Player(object):
         self.rect.x += self.velx
         self.rect.y += self.vely
     
+    
+    
     def checkCollision(self):
         if self.rect.left < squareWidth or self.rect.top < squareWidth or self.rect.right > screenWidth - squareWidth or self.rect.bottom > screenHeight - squareWidth:
             self.points += 1
 
-        
-        
+        if self.rect.collidedictall(colliders):
+            self.collisions = self.collisions + 1
+            print("collide", self.collisions)
+            
+        # for x, y in colliders.items():
+        #     print(x, y)
 
-                
+# def checkCollisions(rect_one, rect_dict):
+#     if rect_one.collidedictall(rect_dict):
+#         print("collision")
+
 #creates surface on which to place text, places text, then blits surface at position x, y
 def showScore(x, y):
     score = font.render("Score: " + str(player.points), True, yellow)
@@ -160,8 +169,6 @@ def drawGrid():
     display.blit(boundaryHor, (0,0))
     display.blit(boundaryHor, (0, screenHeight - squareWidth))
     
-
-
 def redrawGameWindow():
     display.fill(black)
     player.draw(display)
@@ -170,7 +177,6 @@ def redrawGameWindow():
     enemy.draw()
     enemy2.draw()
     pygame.display.update()
-
 
 def main():
     #initializing clock for game
@@ -191,13 +197,14 @@ def main():
 
         player.move()
         
+
         player.checkCollision()
+        # checkCollisions(player.rect, colliders)
 
         redrawGameWindow()
 
-
-enemy = Resistor(white)
-enemy2 = Capacitor(yellow)
+enemy = ElectricComponent(white)
+enemy2 = ElectricComponent(yellow)
 #def __init__(self, row, column, vel, points):
 player = Player(21, 21 , 10, 0)
 
