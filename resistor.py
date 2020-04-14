@@ -171,15 +171,17 @@ class Player:
 
             #executes effect of collision based on value string in dict
             if x == "wire":
-                    self.points -= 20
-                    fps = 100
+                self.points -= 20
+                fps = 100
             elif x == "capacitor":
-                    self.points += 20
-                    fps = 30
+                self.points += 20
+                fps = 30
 
             elif x == 'resistor':
-                    self.points += 30
-                    fps = 60
+                self.points += 30
+                fps = 60
+            elif x == 'boundary':
+                self.points -= 100
 
 ###########################
 ###########################
@@ -244,15 +246,15 @@ def drawGrid():
     display.blit(boundaryHor, (0, screenHeight - squareWidth))
 
     #adds boundaries to colliders dictionary at first run of loop
-    # z = 0
-    # if z == 0:
-    #     #vert colliders
-    #     colliders[(0, 0, squareWidth, screenHeight)] = 'boundary'
-    #     colliders[(screenWidth - squareWidth, 0, squareWidth, screenHeight)] ='boundary'
-    #     #hor colliders
-    #     colliders[(0,0, screenWidth,squareWidth)] = 'boundary'
-    #     colliders[(screenHeight - squareWidth, screenWidth, screenHeight)] = 'boundary'
-    #     z = z +1
+    z = 0
+    if z == 0:
+         #vert colliders
+         colliders[(0, 0, squareWidth, screenHeight)] = 'boundary'
+         colliders[(screenWidth - squareWidth, 0, squareWidth, screenHeight)] ='boundary'
+         #hor colliders
+         colliders[(0,0, screenWidth,squareWidth)] = 'boundary'
+         colliders[(0, screenHeight - squareWidth , screenWidth, screenHeight)] = 'boundary'
+         z = 1
     
 def redrawGameWindow():
     display.fill(white)
@@ -271,9 +273,6 @@ def redrawGameWindow():
 ###########################
 #MAIN LOOP AND OBJECT INITIALIZATION
 ###########################
-
-# enemy = ElectricComponent(playerColor)
-# enemy2 = ElectricComponent(yellow)
 
 #def __init__(self, row, column, vel, points):
 player = Player(21, 21 , 10, 0)
@@ -301,7 +300,7 @@ def main():
 
         if enemy_reset == True:
 
-            load_enemies(display, 6)
+            load_enemies(display, 7)
             enemy_reset = False
             
 
