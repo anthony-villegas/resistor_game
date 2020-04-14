@@ -22,6 +22,8 @@ squareWidth = screenWidth // rows
 #dictionary stores rects touple as key for all obstacles in game and obstacle type (boundary, component) as value
 colliders = {}
 
+elc_components = []
+
 #FPS declared as global to allow manipulation for electrical component speed effects
 fps = 60
 
@@ -57,24 +59,55 @@ debug = True
 #ENEMIES / OBSTACLES WITHIN GAME
 ###########################
 
-class ElectricComponent:
-    def __init__(self, color):
-        self.image = pygame.Surface((squareWidth*3, squareWidth*3))
-        self.image.fill(color)
-        self.rect = self.image.get_rect()
-        self.rect.x = random.randrange(squareWidth,rows)
-        self.rect.y = random.randrange(squareWidth,rows)  
-        colliders[(self.rect.x * squareWidth, self.rect.y * squareWidth, squareWidth * 3,squareWidth * 3)] = 'electric component' 
-      
-    def draw(self):
-        #self.rect.y/x contains an integer value for row. Multiplying this value by squareWidth serves to ensure resistor is placed in an integer value row or column on a normally pixel valued screen
-        display.blit(self.image, (self.rect.x*squareWidth, self.rect.y*squareWidth))  
+# class ElectricComponent:
+#     def __init__(self, color):
+#         self.image = pygame.Surface((squareWidth*3, squareWidth*3))
+#         self.image.fill(color)
+#         self.rect = self.image.get_rect()
+#         self.rect.x = random.randrange(squareWidth,rows)
+#         self.rect.y = random.randrange(squareWidth,rows)  
+#         colliders[(self.rect.x * squareWidth, self.rect.y * squareWidth, squareWidth * 3,squareWidth * 3)] = 'electric component' 
+    
+#     def draw(self):
+#         #self.rect.y/x contains an integer value for row. Multiplying this value by squareWidth serves to ensure resistor is placed in an integer value row or column on a normally pixel valued screen
+#         display.blit(self.image, (self.rect.x*squareWidth, self.rect.y*squareWidth))  
             
-class Resistor(ElectricComponent):
-    pass
+# class Resistor(ElectricComponent):
+#     pass
 
-class Capacitor(ElectricComponent):
-    pass
+# class Capacitor(ElectricComponent):
+#     pass
+
+class Electric_Component():
+    
+    def __init__(self, image, pos_x, pos_y):
+        self.image = image
+        self.rect = self.image.get_rect()
+        self.rect.x = pos_x
+        self.rect.y = pos_y
+
+    def draw(self, display):
+        display.blit(self.image, (self.rect.x*squareWidth, self.rect.y*squareWidth))
+
+class Resistor(Electric_Component):
+    
+    def __init__(self, image, pos_x, pos_y):
+        super().__init__(image, pos_x, pos_y)
+
+        self.cubes_wide = 3
+        self.cubes_tall = 3
+
+        colliders[(self.rect.x * squareWidth, self.rect.y * squareWidth, squareWidth * self.cubes_wide, squareWidth * self.cubes_tall)] = 'resistor'
+
+class Capacitor(Electric_Component):
+
+    def __init__(self, image, pos_x, pos_y):
+        super().__init__(image, pos_x, pos_y)
+
+        self.cubes_wide = 3
+        self.cubes_tall = 3
+
+        colliders[(self.rect.x * squareWidth, self.rect.y * squareWidth, squareWidth * self.cubes_wide, squareWidth * self.cubes_tall)] = 'capacitor'
 
 ###########################
 ###########################
@@ -144,8 +177,6 @@ class Player:
         self.rect.x += self.velx
         self.rect.y += self.vely
     
-    
-    
     def checkCollision(self):
         #returns list of colliders{} dict pair that collides with player
         collisions = self.rect.collidedictall(colliders)
@@ -160,9 +191,13 @@ class Player:
             if x == "wire":
                     self.points -= 20
                     fps = 100
-            elif x == "electric component":
+            elif x == "capacitor":
                     self.points += 20
                     fps = 30
+
+            elif x == 'resistor':
+                    self.points += 30
+                    fps = 60
 
 ###########################
 ###########################
@@ -170,6 +205,29 @@ class Player:
 ###########################
 #GAME / DISPLAY FUNCTIONS
 ###########################
+
+def load_enemies(display, number):
+
+    for x in range(number):
+        image = pygame.Surface((squareWidth*3, squareWidth*3))
+
+        # rand coordinates for electrical component
+        x_pos = random.randrange(squareWidth, rows)
+        y_pos = random.randrange(squareWidth, rows)
+       
+       # selction of random electrical component to print
+        option = random.randrange(0, 2)
+
+        if option == 0:
+            image.fill(blue)
+            elc_components.append(Resistor(image, x_pos, y_pos))
+
+        elif option == 1:
+            image.fill(yellow)
+            elc_components.append(Capacitor(image, x_pos, y_pos))
+
+
+
 
 def showScore(x, y):
     #creates surface on which to place text, places text, then blits surface at position x, y
@@ -222,8 +280,10 @@ def redrawGameWindow():
     drawGrid()
     player.draw(display)
     showScore(screenWidth/2, 2)
-    enemy.draw()
-    enemy2.draw()
+
+    for x in elc_components:
+        x.draw(display)
+
     pygame.display.update()
 
 ###########################
@@ -233,15 +293,19 @@ def redrawGameWindow():
 #MAIN LOOP AND OBJECT INITIALIZATION
 ###########################
 
-enemy = ElectricComponent(playerColor)
-enemy2 = ElectricComponent(yellow)
+# enemy = ElectricComponent(playerColor)
+# enemy2 = ElectricComponent(yellow)
 
 #def __init__(self, row, column, vel, points):
 player = Player(21, 21 , 10, 0)
 
+
+
 def main():
     #initializing clock for game
     clock = pygame.time.Clock()
+
+    enemy_reset = True
 
     # gameloop
     run = True
@@ -257,7 +321,13 @@ def main():
                 run = False
 
         player.move()
-       
+
+        if enemy_reset == True:
+
+            load_enemies(display, 6)
+            enemy_reset = False
+            
+
         player.checkCollision()
        
         # checkCollisions(player.rect, colliders)
