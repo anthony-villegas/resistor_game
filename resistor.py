@@ -14,6 +14,7 @@ pygame.init()
 screenWidth = 1000
 screenHeight = 1000
 display = pygame.display.set_mode((screenWidth, screenHeight))
+menu_height = 100
 
 #assigning number of rows for game and finding integer width of each square within grid
 rows = 100
@@ -220,7 +221,7 @@ def drawGrid():
     
     #variables to track x and y axis for line placement in generating grid
     x = 0
-    y = 0
+    y = menu_height
     
     #will generate amount of lines based on value of rows
     for i in range(rows):
@@ -229,7 +230,7 @@ def drawGrid():
 
         #draws varying color line on horizontal and vertical axis
         #pygame.draw.line(surface/game window, color, start position of line,end position of line )
-        pygame.draw.line(display, gridColor, (x, 0), (x, screenWidth))
+        pygame.draw.line(display, gridColor, (x, menu_height), (x, screenWidth))
         pygame.draw.line(display, gridColor, (0, y), (screenHeight, y))
 
     #creating boundaries along edge of window to denote kill zones
@@ -237,22 +238,22 @@ def drawGrid():
     #vertical boundary
     boundaryVert = pygame.Surface((squareWidth, screenHeight))
     boundaryVert.fill(red)
-    display.blit(boundaryVert, (0, 0))
-    display.blit(boundaryVert, (screenWidth - squareWidth, 0))
+    display.blit(boundaryVert, (0, menu_height))
+    display.blit(boundaryVert, (screenWidth - squareWidth, menu_height))
     #horizontal boundary
     boundaryHor = pygame.Surface((screenWidth, squareWidth))
     boundaryHor.fill(red)
-    display.blit(boundaryHor, (0,0))
+    display.blit(boundaryHor, (0, menu_height))
     display.blit(boundaryHor, (0, screenHeight - squareWidth))
 
     #adds boundaries to colliders dictionary at first run of loop
     z = 0
     if z == 0:
          #vert colliders
-         colliders[(0, 0, squareWidth, screenHeight)] = 'boundary'
-         colliders[(screenWidth - squareWidth, 0, squareWidth, screenHeight)] ='boundary'
+         colliders[(0, menu_height, squareWidth, screenHeight - menu_height)] = 'boundary'
+         colliders[(screenWidth - squareWidth, menu_height, squareWidth, screenHeight - menu_height)] ='boundary'
          #hor colliders
-         colliders[(0,0, screenWidth,squareWidth)] = 'boundary'
+         colliders[(0,menu_height, screenWidth,squareWidth)] = 'boundary'
          colliders[(0, screenHeight - squareWidth , screenWidth, screenHeight)] = 'boundary'
          z = 1
     
