@@ -72,6 +72,10 @@ class Electric_Component():
     def draw(self, display):
         display.blit(self.image, (self.rect.x*squareWidth, self.rect.y*squareWidth))
 
+    def get_position(self):
+        return (self.rect.x, self.rect.y)
+
+
 class Resistor(Electric_Component):
     
     def __init__(self, image, pos_x, pos_y):
@@ -191,25 +195,71 @@ class Player:
 #GAME / DISPLAY FUNCTIONS
 ###########################
 
+# def load_enemies(display, number):
+
+#     for x in range(number):
+#         image = pygame.Surface((squareWidth*3, squareWidth*3))
+
+#         # rand coordinates for electrical component
+#         x_pos = random.randrange(squareWidth, rows)
+#         y_pos = random.randrange(squareWidth, rows)
+       
+#        # selction of random electrical component to print
+#         option = random.randrange(0, 2)
+
+#         if option == 0:
+#             image.fill(blue)
+#             elc_components.append(Resistor(image, x_pos, y_pos))
+
+#         elif option == 1:
+#             image.fill(yellow)
+#             elc_components.append(Capacitor(image, x_pos, y_pos))
+
 def load_enemies(display, number):
 
     for x in range(number):
         image = pygame.Surface((squareWidth*3, squareWidth*3))
 
-        # rand coordinates for electrical component
-        x_pos = random.randrange(squareWidth, rows)
-        y_pos = random.randrange(squareWidth, rows)
+        position = find_position(image.get_rect())
        
+        # print(position)
+
        # selction of random electrical component to print
         option = random.randrange(0, 2)
 
         if option == 0:
             image.fill(blue)
-            elc_components.append(Resistor(image, x_pos, y_pos))
+            elc_components.append(Resistor(image, position[0], position[1]))
 
         elif option == 1:
             image.fill(yellow)
-            elc_components.append(Capacitor(image, x_pos, y_pos))
+            elc_components.append(Capacitor(image, position[0], position[1]))
+
+def find_position(rectangle):
+        #function generates random coordinates untill no collision present
+        collides = True
+
+        x_pos, y_pos = 0,0
+
+        while collides:
+        
+            # random coordinates for electrical component
+            x_pos = random.randrange(squareWidth, rows - squareWidth)
+            y_pos = random.randrange(squareWidth, rows - squareWidth)
+
+            rectangle.x = x_pos * squareWidth
+            rectangle.y = y_pos * squareWidth
+
+            print(rectangle.x, rectangle.y)
+
+            collisions = rectangle.collidedictall(colliders)
+            
+            print(collisions)
+
+            if len(collisions) == 0:
+               collides = False
+        
+        return (x_pos, y_pos)
 
 def showScore(x, y):
     #creates surface on which to place text, places text, then blits surface at position x, y
@@ -240,11 +290,17 @@ def drawGrid():
     boundaryVert.fill(red)
     display.blit(boundaryVert, (0, menu_height))
     display.blit(boundaryVert, (screenWidth - squareWidth, menu_height))
+   
     #horizontal boundary
     boundaryHor = pygame.Surface((screenWidth, squareWidth))
     boundaryHor.fill(red)
     display.blit(boundaryHor, (0, menu_height))
     display.blit(boundaryHor, (0, screenHeight - squareWidth))
+
+    #menu
+    menu = pygame.Surface((screenWidth, menu_height))
+    menu.fill(black)
+    display.blit(menu, (0,0))
 
     #adds boundaries to colliders dictionary at first run of loop
     z = 0
@@ -300,9 +356,9 @@ def main():
         player.move()
 
         if enemy_reset == True:
-
-            load_enemies(display, 7)
+            load_enemies(display, 30)
             enemy_reset = False
+
             
 
         player.checkCollision()
@@ -310,6 +366,7 @@ def main():
         # checkCollisions(player.rect, colliders)
         redrawGameWindow()
 
+        
 #quit pygame
 main()
 pygame.quit()
