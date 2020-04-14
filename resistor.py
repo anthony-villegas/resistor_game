@@ -22,6 +22,7 @@ squareWidth = screenWidth // rows
 #dictionary stores rects touple as key for all obstacles in game and obstacle type (boundary, component) as value
 colliders = {}
 
+# stores resistors, capcitors, etc for blit onto screen
 elc_components = []
 
 #FPS declared as global to allow manipulation for electrical component speed effects
@@ -58,25 +59,6 @@ debug = True
 ###########################
 #ENEMIES / OBSTACLES WITHIN GAME
 ###########################
-
-# class ElectricComponent:
-#     def __init__(self, color):
-#         self.image = pygame.Surface((squareWidth*3, squareWidth*3))
-#         self.image.fill(color)
-#         self.rect = self.image.get_rect()
-#         self.rect.x = random.randrange(squareWidth,rows)
-#         self.rect.y = random.randrange(squareWidth,rows)  
-#         colliders[(self.rect.x * squareWidth, self.rect.y * squareWidth, squareWidth * 3,squareWidth * 3)] = 'electric component' 
-    
-#     def draw(self):
-#         #self.rect.y/x contains an integer value for row. Multiplying this value by squareWidth serves to ensure resistor is placed in an integer value row or column on a normally pixel valued screen
-#         display.blit(self.image, (self.rect.x*squareWidth, self.rect.y*squareWidth))  
-            
-# class Resistor(ElectricComponent):
-#     pass
-
-# class Capacitor(ElectricComponent):
-#     pass
 
 class Electric_Component():
     
@@ -226,9 +208,6 @@ def load_enemies(display, number):
             image.fill(yellow)
             elc_components.append(Capacitor(image, x_pos, y_pos))
 
-
-
-
 def showScore(x, y):
     #creates surface on which to place text, places text, then blits surface at position x, y
     score = font.render("Score: " + str(player.points), True, playerColor)
@@ -298,8 +277,6 @@ def redrawGameWindow():
 
 #def __init__(self, row, column, vel, points):
 player = Player(21, 21 , 10, 0)
-
-
 
 def main():
     #initializing clock for game
