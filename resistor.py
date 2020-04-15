@@ -40,18 +40,15 @@ playerColor = pygame.color.Color('#F1AB86')
 gridColor = pygame.color.Color('#7C7C7C')
 
 #assigning text fonts and sizes for games
-font = pygame.font.Font('freesansbold.ttf', 32)
+font = pygame.font.Font('freesansbold.ttf', 30)
 
 #set caption appearing in window of game
 pygame.display.set_caption("Resistor")
 
 #loading assets to be used in game; designed to minimize issues across operating systems
-gameFolder = os.path.dirname(__file__)
-# joings game folder and images folder
-imageFolder = os.path.join(gameFolder, "img")
+game_folder = os.path.dirname(__file__)
+image_folder = os.path.join(game_folder, "img")
 
-#variable to turn debug mode during development on or off
-debug = True
 
 ###########################
 ###########################
@@ -62,9 +59,10 @@ debug = True
 ###########################
 
 class Electric_Component():
-    
-    def __init__(self, image, pos_x, pos_y):
-        self.image = image
+
+    def __init__(self, pos_x, pos_y):
+        self.image = pygame.Surface((squareWidth*3, squareWidth*3))
+        self.image.fill(playerColor)
         self.rect = self.image.get_rect()
         self.rect.x = pos_x
         self.rect.y = pos_y
@@ -77,22 +75,22 @@ class Electric_Component():
 
 
 class Resistor(Electric_Component):
-    
-    def __init__(self, image, pos_x, pos_y):
-        super().__init__(image, pos_x, pos_y)
 
+    def __init__(self, pos_x, pos_y):
+        super().__init__(pos_x, pos_y)
+        self.image = pygame.image.load(os.path.join(image_folder, "resistor_rectangle.jpg")).convert_alpha()
         self.cubes_wide = 3
-        self.cubes_tall = 3
+        self.cubes_tall = 5
 
         colliders[(self.rect.x * squareWidth, self.rect.y * squareWidth, squareWidth * self.cubes_wide, squareWidth * self.cubes_tall)] = 'resistor'
 
 class Capacitor(Electric_Component):
 
-    def __init__(self, image, pos_x, pos_y):
-        super().__init__(image, pos_x, pos_y)
-
-        self.cubes_wide = 3
-        self.cubes_tall = 3
+    def __init__(self, pos_x, pos_y):
+        super().__init__(pos_x, pos_y)
+        self.image = pygame.image.load(os.path.join(image_folder, "capacitor_tall.PNG")).convert_alpha()
+        self.cubes_wide = 2
+        self.cubes_tall = 5
 
         colliders[(self.rect.x * squareWidth, self.rect.y * squareWidth, squareWidth * self.cubes_wide, squareWidth * self.cubes_tall)] = 'capacitor'
 
@@ -106,42 +104,50 @@ class Capacitor(Electric_Component):
 
 class Player:
     def __init__(self, row, column, vel, points):
-        # self.image = pygame.image.load(os.path.join(imageFolder, "nyancat.jpg")).convert()
+        # self.image = pygame.image.load(os.path.join(image_folder, "resistor.PNG")).convert_alpha()
         #creating surfaces & rects to be displayed on screeen
         self.image = pygame.Surface((squareWidth,squareWidth))
         self.image.fill(blue)
-        self.wire = pygame.Surface((squareWidth, squareWidth))
+        self.wire_width = squareWidth
+        self.wire_height = squareWidth
+        self.wire = pygame.Surface((self.wire_width, self.wire_height))
         self.wire.fill(black)
         self.rect = self.image.get_rect()
         #gives column/row values for player rectangle; same logic as Resistor.draw()
-        self.rect.x = row * squareWidth 
-        self.rect.y = column * squareWidth 
+        self.rect.x = row * squareWidth
+        self.rect.y = column * squareWidth
         #seperate velocities for x and y to force orthogonal movment
         self.vel = vel
         self.velx = 0
         self.vely = 0
         # data storage for scores and collision detection
         self.points = points
+        self.farads = 0
+        self.ohms = 0
+        self.lives = 5
         self.wire_cords = [(self.rect.x, self.rect.y)]
         self.collision_number = 0
 
     def draw(self, display):
-   
-         # if statement blocks wire_cords array from storing duplicate coordinates due to player character staying at a given coordiante for multiple frames
-        if (self.rect.x, self.rect.y) != self.wire_cords[len(self.wire_cords) - 1]:
-            self.wire_cords.append((self.rect.x, self.rect.y))
-            
-            colliders[(self.rect.x, self.rect.y, squareWidth , squareWidth)] = 'wire'
-        
+
         #draws wire / past player positions
         for cord in self.wire_cords:
             display.blit(self.wire, cord)
 
-        
+
          #draws head of wire / character position
-        display.blit(self.image, (self.rect.x, self.rect.y)) 
-    
-  
+        display.blit(self.image, (self.rect.x, self.rect.y))
+
+    def generate_wire(self):
+
+        # if self.velx + self.vely != 0:
+        #       # if statement blocks wire_cords array from storing duplicate coordinates due to player character staying at a given coordiante for multiple frames
+
+            if (self.rect.x, self.rect.y) != self.wire_cords[len(self.wire_cords) - 1]:
+                self.wire_cords.append((self.rect.x, self.rect.y))
+
+                colliders[(self.rect.x, self.rect.y, squareWidth , squareWidth)] = 'wire'
+
     def move(self):
         #go through list of keyboard input
         keys = pygame.key.get_pressed()
@@ -150,12 +156,15 @@ class Player:
             if keys[pygame.K_LEFT]:
                 self.velx = self.vel * -1
                 self.vely = 0
+
             elif keys[pygame.K_RIGHT]:
                 self.velx = self.vel
                 self.vely = 0
+
             elif keys[pygame.K_UP]:
                 self.vely = self.vel * -1
                 self.velx = 0
+
             elif keys[pygame.K_DOWN]:
                 self.vely = self.vel
                 self.velx = 0
@@ -163,30 +172,64 @@ class Player:
         #change player position based on vel components
         self.rect.x += self.velx
         self.rect.y += self.vely
-    
+
     def checkCollision(self):
-        #returns list of colliders{} dict pair that collides with player
-        collisions = self.rect.collidedictall(colliders)
-        
-        if collisions:
-            x = collisions[0][1]
-            print(x)
+        #prevents collision occuring after player is starts, resets, or just collided
+        if self.velx + self.vely != 0:
 
-            global fps
+            #returns list of colliders{} dict pair that collides with player
+            collisions = self.rect.collidedictall(colliders)
 
-            #executes effect of collision based on value string in dict
-            if x == "wire":
-                self.points -= 20
-                fps = 100
-            elif x == "capacitor":
-                self.points += 20
-                fps = 30
+            if collisions:
+                x = collisions[0][1]
+                print(collisions)
 
-            elif x == 'resistor':
-                self.points += 30
-                fps = 60
-            elif x == 'boundary':
-                self.points -= 100
+                global fps
+                
+                #executes effect of collision based on value string in dict
+                if x == "wire":
+                    self.lives -= 1
+                    self.points -= 20
+                    self.collision()
+
+                elif x == "capacitor":
+                    if self.vely == 0:
+                        self.farads += 1
+                        fps = 30
+                    else:
+                        self.lives -= 1
+                        self.collision()
+
+                elif x == 'resistor':
+                    if self.velx == 0:
+                        self.ohms += 1
+                        fps = 60
+                    else:
+                        self.lives -= 1
+                        self.collision()
+
+                elif x == 'boundary':
+                    self.lives -= 1
+                    self.collision()
+
+    def collision(self):
+       
+       #set player stationary to prevent checking for further collisions
+        self.velx, self.vely = 0,0
+       
+        cords = None
+       
+        #remove cords and rewind player position
+        for x in range(2):
+            cords = self.wire_cords.pop()
+            del colliders[cords[0], cords[1], squareWidth, squareWidth]
+
+        self.rect.x = cords[0]
+        self.rect.y = cords[1]
+
+        #slow player speed after impact
+        global fps
+        fps = 100
 
 ###########################
 ###########################
@@ -195,84 +238,68 @@ class Player:
 #GAME / DISPLAY FUNCTIONS
 ###########################
 
-# def load_enemies(display, number):
-
-#     for x in range(number):
-#         image = pygame.Surface((squareWidth*3, squareWidth*3))
-
-#         # rand coordinates for electrical component
-#         x_pos = random.randrange(squareWidth, rows)
-#         y_pos = random.randrange(squareWidth, rows)
-       
-#        # selction of random electrical component to print
-#         option = random.randrange(0, 2)
-
-#         if option == 0:
-#             image.fill(blue)
-#             elc_components.append(Resistor(image, x_pos, y_pos))
-
-#         elif option == 1:
-#             image.fill(yellow)
-#             elc_components.append(Capacitor(image, x_pos, y_pos))
-
 def load_enemies(display, number):
 
     for x in range(number):
-        image = pygame.Surface((squareWidth*3, squareWidth*3))
+        image = pygame.Surface((squareWidth*5, squareWidth*5))
 
         position = find_position(image.get_rect())
-       
-        # print(position)
 
        # selction of random electrical component to print
         option = random.randrange(0, 2)
 
         if option == 0:
-            image.fill(blue)
-            elc_components.append(Resistor(image, position[0], position[1]))
+            elc_components.append(Resistor( position[0], position[1]))
 
         elif option == 1:
-            image.fill(yellow)
-            elc_components.append(Capacitor(image, position[0], position[1]))
+            elc_components.append(Capacitor(position[0], position[1]))
 
 def find_position(rectangle):
-        #function generates random coordinates untill no collision present
+    #function prevents overlaps
         collides = True
 
         x_pos, y_pos = 0,0
 
         while collides:
-        
-            # random coordinates for electrical component
-            x_pos = random.randrange(squareWidth, rows - squareWidth)
-            y_pos = random.randrange(squareWidth, rows - squareWidth)
+
+            # random row, column for electrical component
+            x_pos = random.randrange(1, 97 )
+            y_pos = random.randrange(12, 95)
 
             rectangle.x = x_pos * squareWidth
             rectangle.y = y_pos * squareWidth
 
-            print(rectangle.x, rectangle.y)
-
+            #check for collision with existing component
             collisions = rectangle.collidedictall(colliders)
-            
-            print(collisions)
 
             if len(collisions) == 0:
                collides = False
-        
+
         return (x_pos, y_pos)
 
-def showScore(x, y):
-    #creates surface on which to place text, places text, then blits surface at position x, y
-    score = font.render("Score: " + str(player.points), True, playerColor)
-    display.blit(score, (x, y))
+def render_text(x, y, string):
+    #creates surface on which to put text
+    text = font.render(string, True, red)
+    display.blit(text, (x, y))
 
-def drawGrid():  
+def menu():
+    # menu
+    menu_surface = pygame.Surface((screenWidth, menu_height))
+    menu_surface.fill(black)
+    display.blit(menu_surface, (0,0))
+
+    render_text(5, 4, f"Points: {player.points}" )
+    render_text(200, 4, f"Lives: {player.lives}")
+    render_text(400, 4, f"Farads: {player.farads}")
+    render_text(600, 4, f"Ohms: {player.ohms}")
+
+def drawGrid():
     #draws square grid for game number 'rows'; also used for object placement and movement
-    
+
     #variables to track x and y axis for line placement in generating grid
     x = 0
     y = menu_height
-    
+
     #will generate amount of lines based on value of rows
     for i in range(rows):
         x = x + squareWidth
@@ -290,17 +317,12 @@ def drawGrid():
     boundaryVert.fill(red)
     display.blit(boundaryVert, (0, menu_height))
     display.blit(boundaryVert, (screenWidth - squareWidth, menu_height))
-   
+
     #horizontal boundary
     boundaryHor = pygame.Surface((screenWidth, squareWidth))
     boundaryHor.fill(red)
     display.blit(boundaryHor, (0, menu_height))
     display.blit(boundaryHor, (0, screenHeight - squareWidth))
-
-    #menu
-    menu = pygame.Surface((screenWidth, menu_height))
-    menu.fill(black)
-    display.blit(menu, (0,0))
 
     #adds boundaries to colliders dictionary at first run of loop
     z = 0
@@ -312,12 +334,19 @@ def drawGrid():
          colliders[(0,menu_height, screenWidth,squareWidth)] = 'boundary'
          colliders[(0, screenHeight - squareWidth , screenWidth, screenHeight)] = 'boundary'
          z = 1
-    
-def redrawGameWindow():
+
+def update_game():
     display.fill(white)
     drawGrid()
+
+    menu()
+    # render_text(20, 10, str(player.points))
+    
+    player.checkCollision()
+    player.generate_wire()
     player.draw(display)
-    showScore(screenWidth/2, 2)
+
+   
 
     for x in elc_components:
         x.draw(display)
@@ -343,7 +372,7 @@ def main():
     # gameloop
     run = True
     while run:
-        
+
         pygame.time.delay(fps)
 
         #tracks all events/inputs by user that occur
@@ -356,17 +385,15 @@ def main():
         player.move()
 
         if enemy_reset == True:
-            load_enemies(display, 30)
+            load_enemies(display, 40)
             enemy_reset = False
 
-            
 
-        player.checkCollision()
-       
+
         # checkCollisions(player.rect, colliders)
-        redrawGameWindow()
+        update_game()
 
-        
+
 #quit pygame
 main()
 pygame.quit()
