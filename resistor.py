@@ -73,7 +73,6 @@ class Electric_Component():
     def get_position(self):
         return (self.rect.x, self.rect.y)
 
-
 class Resistor(Electric_Component):
 
     def __init__(self, pos_x, pos_y):
@@ -139,14 +138,13 @@ class Player:
         display.blit(self.image, (self.rect.x, self.rect.y))
 
     def generate_wire(self):
+        
+    # if statement blocks wire_cords array from storing duplicate coordinates due to player character staying at a given coordiante for multiple frames
 
-        # if self.velx + self.vely != 0:
-        #       # if statement blocks wire_cords array from storing duplicate coordinates due to player character staying at a given coordiante for multiple frames
+        if (self.rect.x, self.rect.y) != self.wire_cords[len(self.wire_cords) - 1]:
+            self.wire_cords.append((self.rect.x, self.rect.y))
 
-            if (self.rect.x, self.rect.y) != self.wire_cords[len(self.wire_cords) - 1]:
-                self.wire_cords.append((self.rect.x, self.rect.y))
-
-                colliders[(self.rect.x, self.rect.y, squareWidth , squareWidth)] = 'wire'
+            colliders[(self.rect.x, self.rect.y, squareWidth , squareWidth)] = 'wire'
 
     def move(self):
         #go through list of keyboard input
@@ -193,17 +191,30 @@ class Player:
                     self.collision()
 
                 elif x == "capacitor":
+                    #interpret horizontal movement as succesful connection
                     if self.vely == 0:
                         self.farads += 1
                         fps = 30
+                        #shift player to other side of capacitor
+                        if self.velx > 0:
+                            self.rect.x += squareWidth *2
+                        else:
+                            self.rect.x -= squareWidth *2
                     else:
                         self.lives -= 1
                         self.collision()
 
                 elif x == 'resistor':
+                    #interpret vertical movement as succesful connection
                     if self.velx == 0:
                         self.ohms += 1
                         fps = 60
+                        #shift to other side of resistor
+                        if self.vely > 0:
+                            self.rect.y += squareWidth * 5
+                        else:
+                            self.rect.y -= squareWidth * 5
+
                     else:
                         self.lives -= 1
                         self.collision()
@@ -336,17 +347,14 @@ def drawGrid():
          z = 1
 
 def update_game():
+    
+    player.move()
     display.fill(white)
     drawGrid()
-
     menu()
-    # render_text(20, 10, str(player.points))
-    
     player.checkCollision()
     player.generate_wire()
     player.draw(display)
-
-   
 
     for x in elc_components:
         x.draw(display)
@@ -382,7 +390,7 @@ def main():
             if event.type == pygame.QUIT:
                 run = False
 
-        player.move()
+        
 
         if enemy_reset == True:
             load_enemies(display, 40)
