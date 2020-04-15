@@ -93,6 +93,16 @@ class Capacitor(Electric_Component):
 
         colliders[(self.rect.x * squareWidth, self.rect.y * squareWidth, squareWidth * self.cubes_wide, squareWidth * self.cubes_tall)] = 'capacitor'
 
+class Battery(Electric_Component):
+    
+    def __init__(self, pos_x, pos_y):
+        super().__init__(pos_x, pos_y)
+        self.image = pygame.image.load(os.path.join(image_folder, 'battery_resize.PNG')).convert_alpha()
+        self.cubes_wide = 5
+        self.cubes_tall = 4
+
+        colliders[(self.rect.x * squareWidth, self.rect.y * squareWidth, squareWidth * self.cubes_wide, squareWidth * self.cubes_tall)] = 'battery'
+
 ###########################
 ###########################
 
@@ -124,8 +134,10 @@ class Player:
         self.farads = 0
         self.ohms = 0
         self.lives = 5
+        self.level = 1
+        self.comps_needed = 1
         self.wire_cords = [(self.rect.x, self.rect.y)]
-        self.collision_number = 0
+        
 
     def draw(self, display):
 
@@ -222,25 +234,38 @@ class Player:
                 elif x == 'boundary':
                     self.lives -= 1
                     self.collision()
+                elif x == 'battery':
+                    if (self.farads + self.ohms >= self.comps_needed) and self.velx < 0:
+                        self.velx, self.vely = 0, 0
+                        self.level += 1
+                        # self.wire_cords.clear()
+                        next_level()
+                    else:
+                        self.collision()
 
     def collision(self):
-       
-       #set player stationary to prevent checking for further collisions
-        self.velx, self.vely = 0,0
-       
-        cords = None
-       
-        #remove cords and rewind player position
-        for x in range(2):
-            cords = self.wire_cords.pop()
-            del colliders[cords[0], cords[1], squareWidth, squareWidth]
+        if self.lives == 0:
+           #endscreen
+           print('game over')
+        else:
 
-        self.rect.x = cords[0]
-        self.rect.y = cords[1]
+            #set player stationary to prevent checking for further collisions
+            self.velx, self.vely = 0,0
+        
+            cords = None
+            
+            if len(self.wire_cords) >2:
+                #remove cords and rewind player position
+                for x in range(2):
+                    cords = self.wire_cords.pop()
+                    del colliders[cords[0], cords[1], squareWidth, squareWidth]
 
-        #slow player speed after impact
-        global fps
-        fps = 100
+                self.rect.x = cords[0]
+                self.rect.y = cords[1]
+
+                #slow player speed after impact
+                global fps
+                fps = 100
 
 ###########################
 ###########################
@@ -299,10 +324,11 @@ def menu():
     menu_surface.fill(black)
     display.blit(menu_surface, (0,0))
 
-    render_text(5, 4, f"Points: {player.points}" )
+    render_text(5, 4, f"Level: {player.level}")
     render_text(200, 4, f"Lives: {player.lives}")
-    render_text(400, 4, f"Farads: {player.farads}")
-    render_text(600, 4, f"Ohms: {player.ohms}")
+    render_text(400, 4, f"Components Collected: {player.farads + player.ohms}")
+    render_text(400, 50, f"Components Needed: {player.comps_needed}")
+    
 
 def drawGrid():
     #draws square grid for game number 'rows'; also used for object placement and movement
@@ -318,8 +344,8 @@ def drawGrid():
 
         #draws varying color line on horizontal and vertical axis
         #pygame.draw.line(surface/game window, color, start position of line,end position of line )
-        pygame.draw.line(display, gridColor, (x, menu_height), (x, screenWidth))
-        pygame.draw.line(display, gridColor, (0, y), (screenHeight, y))
+        # pygame.draw.line(display, gridColor, (x, menu_height), (x, screenWidth))
+        # pygame.draw.line(display, gridColor, (0, y), (screenHeight, y))
 
     #creating boundaries along edge of window to denote kill zones
 
@@ -346,8 +372,27 @@ def drawGrid():
          colliders[(0, screenHeight - squareWidth , screenWidth, screenHeight)] = 'boundary'
          z = 1
 
-def update_game():
+def next_level():
+    #clear board for next lvel
+    player.wire_cords.clear()
+    elc_components.clear()
+    colliders.clear()
+    #reset player, battery to standard position + colliders
+    player.rect.x = 49 * squareWidth
+    player.rect.y = 96 * squareWidth
+    player.wire_cords = [(player.rect.x, player.rect.y)]
+    colliders[(battery.rect.x * squareWidth, battery.rect.y * squareWidth, squareWidth * battery.cubes_wide, squareWidth * battery.cubes_tall)] = 'battery'
+    #reload enemies, update game mechanics
+    load_enemies(display, player.level * 3)
+    player.comps_needed = player.level * 2
+    player.farads = 0
+    player.ohms = 0
+    player.lives += 1
+   
     
+    
+def update_game():
+    #blit everything on screen and check for events
     player.move()
     display.fill(white)
     drawGrid()
@@ -355,7 +400,7 @@ def update_game():
     player.checkCollision()
     player.generate_wire()
     player.draw(display)
-
+    battery.draw(display)
     for x in elc_components:
         x.draw(display)
 
@@ -369,18 +414,20 @@ def update_game():
 ###########################
 
 #def __init__(self, row, column, vel, points):
-player = Player(21, 21 , 10, 0)
+player = Player(49, 96 , 10, 0)
+battery = Battery(50, 94.9)
+
+reset = True
 
 def main():
     #initializing clock for game
     clock = pygame.time.Clock()
 
-    enemy_reset = True
+    global reset
 
     # gameloop
     run = True
     while run:
-
         pygame.time.delay(fps)
 
         #tracks all events/inputs by user that occur
@@ -390,13 +437,9 @@ def main():
             if event.type == pygame.QUIT:
                 run = False
 
-        
-
-        if enemy_reset == True:
-            load_enemies(display, 40)
-            enemy_reset = False
-
-
+        if reset == True:
+            load_enemies(display, 1)
+            reset = False
 
         # checkCollisions(player.rect, colliders)
         update_game()
