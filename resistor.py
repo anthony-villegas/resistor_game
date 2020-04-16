@@ -29,6 +29,9 @@ elc_components = []
 #FPS declared as global to allow manipulation for electrical component speed effects
 fps = 60
 
+#initializing clock for game
+clock = pygame.time.Clock()
+
 #assigning hex values for colors to use in game
 black = pygame.color.Color('#000000')
 white = pygame.color.Color('#ffffff')
@@ -36,11 +39,8 @@ blue = pygame.color.Color('#0000FF')
 red = pygame.color.Color('#FF0000')
 yellow = pygame.color.Color('#FFFF00')
 wireColor = pygame.color.Color('#423629')
-playerColor = pygame.color.Color('#F1AB86')
 gridColor = pygame.color.Color('#7C7C7C')
-
-#assigning text fonts and sizes for games
-font = pygame.font.Font('freesansbold.ttf', 30)
+menuColor = pygame.color.Color('#BB4D00')
 
 #set caption appearing in window of game
 pygame.display.set_caption("Resistor")
@@ -62,7 +62,7 @@ class Electric_Component():
 
     def __init__(self, pos_x, pos_y):
         self.image = pygame.Surface((squareWidth*3, squareWidth*3))
-        self.image.fill(playerColor)
+        self.image.fill(blue)
         self.rect = self.image.get_rect()
         self.rect.x = pos_x
         self.rect.y = pos_y
@@ -238,8 +238,8 @@ class Player:
                     if (self.farads + self.ohms >= self.comps_needed) and self.velx < 0:
                         self.velx, self.vely = 0, 0
                         self.level += 1
-                        # self.wire_cords.clear()
-                        next_level()
+                        self.lives += 1
+                        reset_game()
                     else:
                         self.collision()
 
@@ -275,6 +275,9 @@ class Player:
 ###########################
 
 def load_enemies(display, number):
+    
+    if player.level == 1:
+        number = 1
 
     for x in range(number):
         image = pygame.Surface((squareWidth*5, squareWidth*5))
@@ -285,7 +288,7 @@ def load_enemies(display, number):
         option = random.randrange(0, 2)
 
         if option == 0:
-            elc_components.append(Resistor( position[0], position[1]))
+            elc_components.append(Resistor(position[0], position[1]))
 
         elif option == 1:
             elc_components.append(Capacitor(position[0], position[1]))
@@ -313,9 +316,11 @@ def find_position(rectangle):
 
         return (x_pos, y_pos)
 
-def render_text(x, y, string):
+def render_text(x, y, string, color, size):
+    #assigning text fonts and sizes for games
+    font = pygame.font.Font('freesansbold.ttf', size)
     #creates surface on which to put text
-    text = font.render(string, True, red)
+    text = font.render(string, True, color)
     display.blit(text, (x, y))
 
 def menu():
@@ -324,12 +329,11 @@ def menu():
     menu_surface.fill(black)
     display.blit(menu_surface, (0,0))
 
-    render_text(5, 4, f"Level: {player.level}")
-    render_text(200, 4, f"Lives: {player.lives}")
-    render_text(400, 4, f"Components Collected: {player.farads + player.ohms}")
-    render_text(400, 50, f"Components Needed: {player.comps_needed}")
+    render_text(5, 4, f"Level: {player.level}", menuColor, 30)
+    render_text(200, 4, f"Lives: {player.lives}", menuColor, 30)
+    render_text(400, 4, f"Components Collected: {player.farads + player.ohms}", menuColor, 30)
+    render_text(400, 50, f"Components Needed: {player.comps_needed}",menuColor, 30)
     
-
 def drawGrid():
     #draws square grid for game number 'rows'; also used for object placement and movement
 
@@ -372,7 +376,7 @@ def drawGrid():
          colliders[(0, screenHeight - squareWidth , screenWidth, screenHeight)] = 'boundary'
          z = 1
 
-def next_level():
+def reset_game():
     #clear board for next lvel
     player.wire_cords.clear()
     elc_components.clear()
@@ -387,9 +391,6 @@ def next_level():
     player.comps_needed = player.level * 2
     player.farads = 0
     player.ohms = 0
-    player.lives += 1
-   
-    
     
 def update_game():
     #blit everything on screen and check for events
@@ -406,6 +407,26 @@ def update_game():
 
     pygame.display.update()
 
+def start_screen():
+    #screen when starting game
+    render_text(400, 500, "resistor", red, 64)
+    render_text(400, 650, "use arrows to move", white, 20)
+    render_text(400, 700, "press any key to begin", white, 18)
+    pygame.display.flip()
+    #waiting for user input to start game
+    wait = True
+    while wait:
+        clock.tick(fps)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.KEYUP:
+                wait= False
+
+def game_over():
+    render_text(400, 500, "resistored!", blue, 64)
+
+
 ###########################
 ###########################
 
@@ -419,9 +440,10 @@ battery = Battery(50, 94.9)
 
 reset = True
 
+
 def main():
-    #initializing clock for game
-    clock = pygame.time.Clock()
+    
+    start_screen()
 
     global reset
 
@@ -436,6 +458,15 @@ def main():
             #if user presses exit then will stop gameLoop and end game
             if event.type == pygame.QUIT:
                 run = False
+
+          #game over screen if player dies
+        
+        #game over screen if death
+        if player.lives == 0:
+            game_over()
+            reset_game()
+            player.lives = 5
+            player.level = 1
 
         if reset == True:
             load_enemies(display, 1)
