@@ -41,6 +41,7 @@ yellow = pygame.color.Color('#FFFF00')
 wireColor = pygame.color.Color('#423629')
 gridColor = pygame.color.Color('#7C7C7C')
 menuColor = pygame.color.Color('#BB4D00')
+menuColor = red
 
 #set caption appearing in window of game
 pygame.display.set_caption("Resistor")
@@ -192,8 +193,6 @@ class Player:
 
             if collisions:
                 x = collisions[0][1]
-                print(collisions)
-
                 global fps
                 
                 #executes effect of collision based on value string in dict
@@ -244,28 +243,24 @@ class Player:
                         self.collision()
 
     def collision(self):
-        if self.lives == 0:
-           #endscreen
-           print('game over')
-        else:
-
-            #set player stationary to prevent checking for further collisions
-            self.velx, self.vely = 0,0
         
-            cords = None
-            
-            if len(self.wire_cords) >2:
-                #remove cords and rewind player position
-                for x in range(2):
-                    cords = self.wire_cords.pop()
-                    del colliders[cords[0], cords[1], squareWidth, squareWidth]
+        #set player stationary to prevent checking for further collisions
+        self.velx, self.vely = 0,0
+    
+        cords = None
+        
+        if len(self.wire_cords) >2:
+            #remove cords and rewind player position
+            for x in range(2):
+                cords = self.wire_cords.pop()
+                del colliders[cords[0], cords[1], squareWidth, squareWidth]
 
-                self.rect.x = cords[0]
-                self.rect.y = cords[1]
+            self.rect.x = cords[0]
+            self.rect.y = cords[1]
 
-                #slow player speed after impact
-                global fps
-                fps = 100
+            #slow player speed after impact
+            global fps
+            fps = 100
 
 ###########################
 ###########################
@@ -386,11 +381,13 @@ def reset_game():
     player.rect.y = 96 * squareWidth
     player.wire_cords = [(player.rect.x, player.rect.y)]
     colliders[(battery.rect.x * squareWidth, battery.rect.y * squareWidth, squareWidth * battery.cubes_wide, squareWidth * battery.cubes_tall)] = 'battery'
-    #reload enemies, update game mechanics
+    #reload enemies, update player atributes
     load_enemies(display, player.level * 3)
     player.comps_needed = player.level * 2
     player.farads = 0
     player.ohms = 0
+    player.velx = 0
+    player.vely = 0
     
 def update_game():
     #blit everything on screen and check for events
@@ -407,11 +404,18 @@ def update_game():
 
     pygame.display.update()
 
-def start_screen():
-    #screen when starting game
-    render_text(400, 500, "resistor", red, 64)
-    render_text(400, 650, "use arrows to move", white, 20)
-    render_text(400, 700, "press any key to begin", white, 18)
+def start_screen(start):
+    
+    if start == True:
+        #screen when starting game
+        render_text(400, 500, "resistor", red, 64)
+        render_text(400, 650, "use arrows to move", white, 20)
+        render_text(400, 700, "press any key to begin", white, 18)
+    else:
+        #screen upon death
+        render_text(400, 500, "resistored", red, 64)
+        render_text(400, 600, "press any key to restart", blue, 18)
+
     pygame.display.flip()
     #waiting for user input to start game
     wait = True
@@ -422,10 +426,6 @@ def start_screen():
                 pygame.quit()
             if event.type == pygame.KEYUP:
                 wait= False
-
-def game_over():
-    render_text(400, 500, "resistored!", blue, 64)
-
 
 ###########################
 ###########################
@@ -440,10 +440,9 @@ battery = Battery(50, 94.9)
 
 reset = True
 
-
 def main():
     
-    start_screen()
+    start_screen(True)
 
     global reset
 
@@ -463,14 +462,16 @@ def main():
         
         #game over screen if death
         if player.lives == 0:
-            game_over()
+            start_screen(False)
             reset_game()
             player.lives = 5
             player.level = 1
+            player.comps_needed = 1
+            reset = True
 
         if reset == True:
-            load_enemies(display, 1)
-            reset = False
+             load_enemies(display, 1)
+             reset = False
 
         # checkCollisions(player.rect, colliders)
         update_game()
