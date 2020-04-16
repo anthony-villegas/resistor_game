@@ -1,5 +1,4 @@
 import pygame
-import time
 import random
 import os
 
@@ -382,8 +381,15 @@ def reset_game():
     player.wire_cords = [(player.rect.x, player.rect.y)]
     colliders[(battery.rect.x * squareWidth, battery.rect.y * squareWidth, squareWidth * battery.cubes_wide, squareWidth * battery.cubes_tall)] = 'battery'
     #reload enemies, update player atributes
-    load_enemies(display, player.level * 3)
-    player.comps_needed = player.level * 2
+    if player.level ==1:
+
+        load_enemies(display, 1)
+        player.comps_needed = 1
+    
+    else:
+        load_enemies(display, player.level * 3)
+        player.comps_needed = player.level * 2
+
     player.farads = 0
     player.ohms = 0
     player.velx = 0
@@ -463,11 +469,12 @@ def main():
         #game over screen if death
         if player.lives == 0:
             start_screen(False)
-            reset_game()
+            
             player.lives = 5
             player.level = 1
-            player.comps_needed = 1
-            reset = True
+            player.comps_needed = .5
+            reset_game()
+            
 
         if reset == True:
              load_enemies(display, 1)
