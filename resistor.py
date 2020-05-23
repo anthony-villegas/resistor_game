@@ -150,7 +150,6 @@ class Player:
         display.blit(self.image, (self.rect.x, self.rect.y))
 
     def generate_wire(self):
-        
     # if statement blocks wire_cords array from storing duplicate coordinates due to player character staying at a given coordiante for multiple frames
 
         if (self.rect.x, self.rect.y) != self.wire_cords[len(self.wire_cords) - 1]:
@@ -232,7 +231,9 @@ class Player:
                 elif x == 'boundary':
                     self.lives -= 1
                     self.collision()
+                    
                 elif x == 'battery':
+                    # trigger for generating new level
                     if (self.farads + self.ohms >= self.comps_needed) and self.velx < 0:
                         self.velx, self.vely = 0, 0
                         self.level += 1
@@ -312,7 +313,7 @@ def find_position(rectangle):
 
 def render_text(x, y, string, color, size):
     #assigning text fonts and sizes for games
-    font = pygame.font.Font('freesansbold.ttf', size)
+    font = pygame.font.SysFont("Arial", size)
     #creates surface on which to put text
     text = font.render(string, True, color)
     display.blit(text, (x, y))
@@ -339,11 +340,6 @@ def drawGrid():
     for i in range(rows):
         x = x + squareWidth
         y = y + squareWidth
-
-        #draws varying color line on horizontal and vertical axis
-        #pygame.draw.line(surface/game window, color, start position of line,end position of line )
-        # pygame.draw.line(display, gridColor, (x, menu_height), (x, screenWidth))
-        # pygame.draw.line(display, gridColor, (0, y), (screenHeight, y))
 
     #creating boundaries along edge of window to denote kill zones
 
@@ -390,6 +386,7 @@ def reset_game():
         load_enemies(display, player.level * 3)
         player.comps_needed = player.level * 2
 
+    #reset player variables
     player.farads = 0
     player.ohms = 0
     player.velx = 0
@@ -440,7 +437,7 @@ def start_screen(start):
 #MAIN LOOP AND OBJECT INITIALIZATION
 ###########################
 
-#def __init__(self, row, column, vel, points):
+#intialize 
 player = Player(49, 96 , 10, 0)
 battery = Battery(50, 94.9)
 
@@ -463,8 +460,6 @@ def main():
             #if user presses exit then will stop gameLoop and end game
             if event.type == pygame.QUIT:
                 run = False
-
-          #game over screen if player dies
         
         #game over screen if death
         if player.lives == 0:
@@ -475,7 +470,6 @@ def main():
             player.comps_needed = .5
             reset_game()
             
-
         if reset == True:
              load_enemies(display, 1)
              reset = False
